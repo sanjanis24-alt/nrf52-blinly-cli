@@ -22,24 +22,26 @@ jobs:
         with:
           path: app
 
-      # Step 2: Initialize west workspace
+      # Step 2: Initialize west using upstream Zephyr (shallow clone for speed)
       - name: Initialize West Workspace
         run: |
-          west init -l app
-          west update --narrow -o=--depth=1
+          west init -m https://github.com/zephyrproject-rtos/zephyr --mr v3.7.0 workspace
+          cd workspace
+          west update --narrow -o=--depth=1 hal_nordic cmsis
 
-      # Step 3: Build the application for nRF52 DK
+      # Step 3: Compile your blinky app for nRF52 DK
+      # Change 'nrf52dk/nrf52832' to 'nrf52840dk/nrf52840' if you use the 52840 DK
       - name: Build Firmware with West
         run: |
-          cd app
-          west build -b nrf52dk_nrf52832 .
+          cd workspace
+          west build -b nrf52dk/nrf52832 ../app -- -DOVERLAY_CONFIG=""
 
-      # Step 4: Save the compiled .hex and .bin as artifacts
+      # Step 4: Archive output .hex and .bin artifacts
       - name: Upload Firmware Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: nrf52-blinky-firmware
           path: |
-            app/build/zephyr/zephyr.hex
-            app/build/zephyr/zephyr.bin
+            workspace/build/zephyr/zephyr.hex
+            workspace/build/zephyr/zephyr.bin
           retention-days: 7
