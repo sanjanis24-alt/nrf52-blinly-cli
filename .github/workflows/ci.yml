@@ -14,6 +14,8 @@ jobs:
     # Use the official Zephyr container with pre-installed toolchains
     container:
       image: ghcr.io/zephyrproject-rtos/ci:v0.26.8
+      env:
+        ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.5-1
 
     steps:
       # Step 1: Check out your repository
@@ -34,7 +36,8 @@ jobs:
       - name: Build Firmware with West
         run: |
           cd workspace
-          west build -b nrf52dk/nrf52832 ../app -- -DOVERLAY_CONFIG=""
+          . zephyr/zephyr-env.sh
+          west build -b nrf52dk/nrf52832 ../app
 
       # Step 4: Archive output .hex and .bin artifacts
       - name: Upload Firmware Artifacts
