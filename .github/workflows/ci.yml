@@ -1,0 +1,45 @@
+name: Zephyr Blinky CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-zephyr:
+    runs-on: ubuntu-latest
+
+    # Use the official Zephyr container with pre-installed toolchains
+    container:
+      image: ghcr.io/zephyrproject-rtos/ci:v0.26.8
+
+    steps:
+      # Step 1: Check out your repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          path: app
+
+      # Step 2: Initialize west workspace
+      - name: Initialize West Workspace
+        run: |
+          west init -l app
+          west update --narrow -o=--depth=1
+
+      # Step 3: Build the application for nRF52 DK
+      - name: Build Firmware with West
+        run: |
+          cd app
+          west build -b nrf52dk_nrf52832 .
+
+      # Step 4: Save the compiled .hex and .bin as artifacts
+      - name: Upload Firmware Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nrf52-blinky-firmware
+          path: |
+            app/build/zephyr/zephyr.hex
+            app/build/zephyr/zephyr.bin
+          retention-days: 7
